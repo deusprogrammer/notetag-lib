@@ -9,13 +9,17 @@ class NoteTag
         openTagRegex = /<m:([a-zA-Z]+)(.*)>/
         elementRegex = /(\w+)\s*=\s*['"](.+)['"]/
         
+        print "TAG STRING: #{tagString}\n"
+        
         openTagElements = openTagRegex.match(tagString)
-        if(!openTagElements.nil?)
+        if(!openTagElements.nil? && openTagElements.size > 0)
             @label = openTagElements[1]
             if (!openTagElements[2].nil? && openTagElements[2] != "")
                 openTagElements[2].split(/\s+/).each { |attribute|
-                    values = elementRegex.match(attribute)
-                    @attributes[values[1]] = values[2]
+                    if (!attribute.nil? && attribute != "")
+                        values = elementRegex.match(attribute)
+                        @attributes[values[1]] = values[2]
+                    end
                 }
             end
         end
@@ -128,6 +132,10 @@ class NoteTagBlock
                         
                         note_tags.push open_tag
                         
+                        data = ""
+                        close_tag_data = ""
+                        open_tag_data = ""
+                        
                         print "TRANSITION START\n"
                         state = :START
                     end
@@ -150,24 +158,25 @@ def print_note_tag_block(noteTagBlock, depth = 0)
         }
         depth.times {print "\t"}
         if (note_tag.children.size > 0)
-            print "CHILDREN:\n"
+            print "DATA: "
             note_tag.children.each {|child|
                 if (child.class == NoteTagBlock)
+                    print "\n"
                     print_note_tag_block child, depth + 1
                 elsif (child.class == String)
-                    depth.times {print "\t"}
-                    print "\t#{child}"
+                    print "#{child}\n"
                 end
             }
         end
+        print "\n"
     }
 end
 
 note_tag_block = NoteTagBlock.new   "<m:stats>" +
                                         "<m:mp>30</m:mp>" +
                                         "<m:skillSet type='magic'>" +
-                                            "<m:skill>Fire 1</m:mp>" +
-                                            "<m:skill>Fire 2</m:mp>" +
+                                            "<m:skill>Fire 1</m:skill>" +
+                                            "<m:skill>Fire 2</m:skill>" +
                                         "</m:skillSet>" +
                                     "</m:stats>" +
                                     "<m:actorEquip>" +
