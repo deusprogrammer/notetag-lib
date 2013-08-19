@@ -64,8 +64,14 @@ class NoteTagBlock
         open_tag = nil
         close_tag_data = ""
         state = :START
+        
+        print "-------------------------------------------\n"
+        print "#{noteTagString}\n"
+        print "-------------------------------------------\n"
+        
         noteTagString.each_char { |byte|
             # While in start state, look for start of first tag
+            # print "#{byte}\n"
             case state
             when :START
                 if (byte == '<')
@@ -180,7 +186,7 @@ note_tag_block = NoteTagBlock.new   "<m:stats>" +
                                         "</m:skillSet>" +
                                     "</m:stats>" +
                                     "<m:actorEquip>" +
-                                        "<m:actorSay actor='Melon'>I like this dress!</m:actorSay>"
-                                        "<m:actorSay actor='Tess'>This isn't armor!</m:actorSay>"
+                                        "<m:actorSay actor='Melon'>I like this dress!</m:actorSay>" +
+                                        "<m:actorSay actor='Tess'>This isn't armor!</m:actorSay>" +
                                     "</m:actorEquip>"
 print_note_tag_block note_tag_block
