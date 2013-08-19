@@ -2,10 +2,13 @@ class NoteTag
     attr_reader   :label
     attr_reader   :attributes
     attr_accessor :children
+    attr_accessor :data
+    attr_reader :has_children
     def initialize(tagString)
         @label = ""
         @attributes = Hash.new
         @children = []
+        @data = nil
         openTagRegex = /<m:([a-zA-Z]+)(.*)>/
         elementRegex = /(\w+)\s*=\s*['"](.+)['"]/
         
@@ -23,6 +26,14 @@ class NoteTag
                 }
             end
         end
+    end
+    
+    def has_children?
+        return children.size > 0
+    end
+    
+    def has_data?
+        return !data.nil?
     end
 end
 
@@ -133,7 +144,7 @@ class NoteTagBlock
                         if (!data.nil? && data != "" && (data.include?("<") && data.include?(">")))
                             open_tag.children.push NoteTagBlock.new data
                         elsif (!data.nil? && data != "" && !(data.include?("<") || data.include?(">")))
-                            open_tag.children.push data
+                            open_tag.data = data
                         end
                         
                         note_tags.push open_tag
@@ -163,16 +174,14 @@ def print_note_tag_block(noteTagBlock, depth = 0)
             print "\t#{key} => #{value}\n"
         }
         depth.times {print "\t"}
-        if (note_tag.children.size > 0)
-            print "DATA: "
+        if (note_tag.has_children?)
+            print "CHILDREN: "
             note_tag.children.each {|child|
-                if (child.class == NoteTagBlock)
-                    print "\n"
-                    print_note_tag_block child, depth + 1
-                elsif (child.class == String)
-                    print "#{child}\n"
-                end
+                print "\n"
+                print_note_tag_block child, depth + 1
             }
+        elsif (note_tag.has_data?)
+            print "DATA: #{note_tag.data}\n"
         end
         print "\n"
     }
