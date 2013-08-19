@@ -12,12 +12,12 @@ class NoteTag
         openTagElements = openTagRegex.match(tagString)
         if(!openTagElements.nil?)
             @label = openTagElements[1]
-            openTagElements[2].split(/\s+/).each { |attribute|
-                if (attribute != "")
+            if (!openTagElements[2].nil? && openTagElements[2] != "")
+                openTagElements[2].split(/\s+/).each { |attribute|
                     values = elementRegex.match(attribute)
                     @attributes[values[1]] = values[2]
-                end
-            }
+                }
+            end
         end
     end
 end
@@ -92,7 +92,6 @@ class NoteTagBlock
             when :VERIFY_CLOSE_TAG
                 close_tag_data += byte
                 if (byte != '/')
-                    print "ADDING #{close_tag_data} TO DATA\n"
                     data += close_tag_data
                     close_tag_data = ""
                     
@@ -108,7 +107,6 @@ class NoteTagBlock
                     close_tag = CloseTag.new close_tag_data
                     print "**#{close_tag.label}** vs **#{open_tag.label}**\n"
                     if (close_tag.label != open_tag.label)
-                        print "ADDING #{close_tag_data} TO DATA\n"
                         data += close_tag_data
                         close_tag_data = ""
                         
@@ -122,8 +120,10 @@ class NoteTagBlock
                         print "Attributes #{open_tag.attributes}\n"
                         print "Note Tags  #{note_tags}\n"
                         print "**********************************\n"
-                        if (!data.nil? && data != "")
+                        if (!data.nil? && data != "" && (data.include?("<") && data.include?(">")))
                             open_tag.children.push NoteTagBlock.new data
+                        elsif (!data.nil? && data != "" && !(data.include?("<") || data.include?(">")))
+                            open_tag.children.push data
                         end
                         
                         note_tags.push open_tag
@@ -135,18 +135,6 @@ class NoteTagBlock
             else
             end
         }
-        #print "**********************************\n"
-        #print "DATA:      #{data}\n"
-        #print "Tag        #{open_tag.label}\n"
-        #print "Attributes #{open_tag.attributes}\n"
-        #print "Note Tags  #{note_tags}\n"
-        #print "**********************************\n"
-        
-        # Add last children to note_tag
-        #if (!data.nil? && data != "")
-        #    open_tag.children += NoteTagBlock.new data
-        #end
-        #note_tags += open_tag
     end
 end
 
@@ -164,11 +152,26 @@ def print_note_tag_block(noteTagBlock, depth = 0)
         if (note_tag.children.size > 0)
             print "CHILDREN:\n"
             note_tag.children.each {|child|
-                print_note_tag_block child, depth + 1
+                if (child.class == NoteTagBlock)
+                    print_note_tag_block child, depth + 1
+                elsif (child.class == String)
+                    depth.times {print "\t"}
+                    print "\t#{child}"
+                end
             }
         end
     }
 end
 
-note_tag_block = NoteTagBlock.new "<m:actorEquip action='say'><m:actorDo action='changeClass'></m:actorDo></m:actorEquip>"
+note_tag_block = NoteTagBlock.new   "<m:stats>" +
+                                        "<m:mp>30</m:mp>" +
+                                        "<m:skillSet type='magic'>" +
+                                            "<m:skill>Fire 1</m:mp>" +
+                                            "<m:skill>Fire 2</m:mp>" +
+                                        "</m:skillSet>" +
+                                    "</m:stats>" +
+                                    "<m:actorEquip>" +
+                                        "<m:actorSay actor='Melon'>I like this dress!</m:actorSay>"
+                                        "<m:actorSay actor='Tess'>This isn't armor!</m:actorSay>"
+                                    "</m:actorEquip>"
 print_note_tag_block note_tag_block
