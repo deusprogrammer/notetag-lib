@@ -1,13 +1,11 @@
 class NoteTag
     attr_reader   :label
     attr_reader   :attributes
-    attr_accessor :children
     attr_accessor :data
     
     def initialize(tagString)
         @label = ""
         @attributes = Hash.new
-        @children = []
         @data = nil
         openTagRegex = /<(\S+)\s*(.*)>/
         elementRegex = /(\w+)\s*=\s*['"]*([a-zA-Z0-9]+)['"]*/
@@ -31,15 +29,15 @@ class NoteTag
     end
     
     def has_children?
-        return children.size > 0
+        return !@data.nil? && @data.is_a?(NoteTagBlock)
     end
     
     def has_data?
-        return !data.nil?
+        return !@data.nil? && @data.is_a?(String)
     end
     
     def has_attributes?
-        return attributes.size > 0
+        return @attributes.size > 0
     end
     
     def is_module?
@@ -82,11 +80,9 @@ end
 :SEARCH_CLOSE_TAG
 
 class NoteTagBlock
-    attr_reader :tag
-    attr_reader :data
-    attr_reader :attributes
     attr_reader :note_tags
-    
+    attr_reader :data
+
     @@debug_mode = false
     
     def self.debug_mode=value
@@ -140,7 +136,7 @@ class NoteTagBlock
                     NoteTagBlock.print_debug "Attributes #{open_tag.attributes}\n"
                     NoteTagBlock.print_debug "**********************************\n"
                     
-                    note_tags.push open_tag
+                    @note_tags.push open_tag
                     
                     data = ""
                     close_tag_data = ""
@@ -189,12 +185,12 @@ class NoteTagBlock
                         NoteTagBlock.print_debug "Attributes #{open_tag.attributes}\n"
                         NoteTagBlock.print_debug "**********************************\n"
                         if (!data.nil? && data != "" && (data.include?("<") && data.include?(">")))
-                            open_tag.children.push NoteTagBlock.new data
+                            open_tag.data = NoteTagBlock.new data
                         elsif (!data.nil? && data != "" && !(data.include?("<") || data.include?(">")))
                             open_tag.data = data
                         end
                         
-                        note_tags.push open_tag
+                        @note_tags.push open_tag
                         
                         data = ""
                         close_tag_data = ""
@@ -209,29 +205,42 @@ class NoteTagBlock
         }
     end
     
+    def get_note_tag(note_tag_name)
+        return @note_tags.select {|note_tag| note_tag.label == note_tag_name}
+    end
+    
+    def get_module(module_name)
+        return @note_tags.select {|note_tag| note_tag.is_module? && note_tag.module_name == module_name}
+    end
+    
+    def modules()
+        return @note_tags.select {|note_tag| note_tag.is_module?}
+    end
+    
+    def all()
+        return @note_tags
+    end
+    
     def debug(depth = 0)
-        note_tags.each {|note_tag|
-            depth.times {print "\t"}
+        @note_tags.each {|note_tag|
+            depth.times {print "   "}
             if (note_tag.is_module?)
                 print "MODULE: #{note_tag.module_name}\n"
             else
-                print "TAG:    #{note_tag.label}\n"
+                print "TAG: #{note_tag.label}\n"
             end
-            depth.times {print "\t"}
+            depth.times {print "   "}
             if (note_tag.has_attributes?)
                 print "ATTRIBUTES:\n"
                 note_tag.attributes.each {|key, value|
-                    depth.times {print "\t"}
+                    depth.times {print "   "}
                     print "\t#{key} => #{value}\n"
                 }
             end
-            depth.times {print "\t"}
+            depth.times {print "   "}
             if (note_tag.has_children?)
-                print "CHILDREN: "
-                note_tag.children.each {|child|
-                    print "\n"
-                    child.debug depth + 1
-                }
+                print "DATA: "
+                note_tag.data.debug depth + 1
             elsif (note_tag.has_data?)
                 print "DATA:   #{note_tag.data}\n"
             end
