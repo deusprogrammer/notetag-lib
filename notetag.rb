@@ -254,3 +254,13 @@ note_tag_block = NoteTagBlock.new   "<m:stats>" +
                                     "</m:actorEquip>" +
                                     "<m:limitedUses uses=1 />"
 note_tag_block.debug
+
+print "OBJECTS: \n"
+note_tag_block.instance_variables.each {|object|
+    print "\t#{object} = #{note_tag_block.instance_variable_get(object)}\n"
+}
+
+print "METHODS: \n"
+note_tag_block.methods.each {|method|
+    print "\t#{method}\n"
+}
